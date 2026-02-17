@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #2c3e50;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .month {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .month-header {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            padding: 5px 0;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            user-select: none;
+        }
+
+        .day:hover {
+            background-color: #e9ecef;
+            transform: scale(1.05);
+        }
+
+        .day.empty {
+            cursor: default;
+            background-color: transparent;
+            border: none;
+        }
+
+        .day.empty:hover {
+            transform: none;
+        }
+
+        .day.completed {
+            background-color: #27ae60;
+            color: white;
+            border-color: #27ae60;
+            font-weight: 600;
+        }
+
+        .day.completed:hover {
+            background-color: #229954;
+        }
+
+        .heatmap-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .heatmap-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .heatmap {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .heatmap-container {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 100%;
+        }
+
+        .heatmap-months {
+            display: flex;
+            margin-bottom: 5px;
+            padding-left: 35px;
+        }
+
+        .heatmap-month-label {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .heatmap-content {
+            display: flex;
+            gap: 10px;
+        }
+
+        .heatmap-weekdays {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            justify-content: space-around;
+            padding-right: 5px;
+        }
+
+        .heatmap-weekday {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            height: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .heatmap-weeks {
+            display: flex;
+            gap: 3px;
+        }
+
+        .heatmap-week {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .heatmap-day {
+            width: 12px;
+            height: 12px;
+            background-color: #ebedf0;
+            border-radius: 2px;
+        }
+
+        .heatmap-day.completed {
+            background-color: #27ae60;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 15px;
+            gap: 5px;
+            font-size: 0.75rem;
+            color: #7f8c8d;
+        }
+
+        .heatmap-legend-item {
+            width: 12px;
+            height: 12px;
+            background-color: #ebedf0;
+            border-radius: 2px;
+        }
+
+        .heatmap-legend-item.completed {
+            background-color: #27ae60;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .calendar-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .month {
+                padding: 15px;
+            }
+
+            .heatmap-section {
+                padding: 20px;
+            }
+
+            .day {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            .calendar-grid {
+                gap: 15px;
+            }
+
+            .month {
+                padding: 10px;
+            }
+
+            .month-header {
+                font-size: 1rem;
+            }
+
+            .heatmap-section {
+                padding: 15px;
+            }
+
+            .heatmap-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Habit Tracker</h1>
+        <div id="calendar" class="calendar-grid"></div>
+        <div class="heatmap-section">
+            <div class="heatmap-title">Year Overview</div>
+            <div class="heatmap" id="heatmap"></div>
+        </div>
+    </div>
+
+    <script>
+        // Storage key for localStorage
+        const STORAGE_KEY = 'habitTracker';
+
+        // Get current year
+        const currentYear = new Date().getFullYear();
+
+        // Month names
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Weekday names
+        const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekdayNamesHeatmap = ['Mon', 'Wed', 'Fri'];
+
+        // Load completed days from localStorage
+        function loadCompletedDays() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    return JSON.parse(data);
+                } catch (e) {
+                    console.error('Error parsing localStorage data:', e);
+                    return {};
+                }
+            }
+            return {};
+        }
+
+        // Save completed days to localStorage
+        function saveCompletedDays(completedDays) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(completedDays));
+        }
+
+        // Get date key for storage (YYYY-MM-DD format)
+        function getDateKey(year, month, day) {
+            const monthStr = String(month + 1).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            return `${year}-${monthStr}-${dayStr}`;
+        }
+
+        // Check if a day is completed
+        function isDayCompleted(completedDays, year, month, day) {
+            const key = getDateKey(year, month, day);
+            return completedDays[key] === true;
+        }
+
+        // Toggle day completion
+        function toggleDay(year, month, day) {
+            const completedDays = loadCompletedDays();
+            const key = getDateKey(year, month, day);
+            
+            if (completedDays[key]) {
+                delete completedDays[key];
+            } else {
+                completedDays[key] = true;
+            }
+            
+            saveCompletedDays(completedDays);
+            renderCalendar();
+            renderHeatmap();
+        }
+
+        // Get number of days in a month
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        // Get first day of week for a month (0 = Sunday, 6 = Saturday)
+        function getFirstDayOfMonth(year, month) {
+            return new Date(year, month, 1).getDay();
+        }
+
+        // Render calendar
+        function renderCalendar() {
+            const completedDays = loadCompletedDays();
+            const calendarDiv = document.getElementById('calendar');
+            calendarDiv.innerHTML = '';
+
+            for (let month = 0; month < 12; month++) {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'month';
+
+                // Month header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'month-header';
+                headerDiv.textContent = `${monthNames[month]} ${currentYear}`;
+                monthDiv.appendChild(headerDiv);
+
+                // Weekday headers
+                const weekdaysDiv = document.createElement('div');
+                weekdaysDiv.className = 'weekdays';
+                weekdayNames.forEach(name => {
+                    const weekdayDiv = document.createElement('div');
+                    weekdayDiv.className = 'weekday';
+                    weekdayDiv.textContent = name;
+                    weekdaysDiv.appendChild(weekdayDiv);
+                });
+                monthDiv.appendChild(weekdaysDiv);
+
+                // Days grid
+                const daysDiv = document.createElement('div');
+                daysDiv.className = 'days';
+
+                const firstDay = getFirstDayOfMonth(currentYear, month);
+                const daysInMonth = getDaysInMonth(currentYear, month);
+
+                // Add empty cells for days before month starts
+                for (let i = 0; i < firstDay; i++) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'day empty';
+                    daysDiv.appendChild(emptyDiv);
+                }
+
+                // Add day cells
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'day';
+                    dayDiv.textContent = day;
+                    
+                    if (isDayCompleted(completedDays, currentYear, month, day)) {
+                        dayDiv.classList.add('completed');
+                    }
+
+                    dayDiv.addEventListener('click', () => {
+                        toggleDay(currentYear, month, day);
+                    });
+
+                    daysDiv.appendChild(dayDiv);
+                }
+
+                monthDiv.appendChild(daysDiv);
+                calendarDiv.appendChild(monthDiv);
+            }
+        }
+
+        // Get day of week (0 = Sunday, 6 = Saturday) for a specific date
+        function getDayOfWeek(year, month, day) {
+            return new Date(year, month, day).getDay();
+        }
+
+        // Render heatmap
+        function renderHeatmap() {
+            const completedDays = loadCompletedDays();
+            const heatmapDiv = document.getElementById('heatmap');
+            heatmapDiv.innerHTML = '';
+
+            const container = document.createElement('div');
+            container.className = 'heatmap-container';
+
+            // Create month labels
+            const monthsDiv = document.createElement('div');
+            monthsDiv.className = 'heatmap-months';
+            
+            // Calculate weeks in year
+            const firstDayOfYear = new Date(currentYear, 0, 1);
+            const lastDayOfYear = new Date(currentYear, 11, 31);
+            const firstDayWeekday = firstDayOfYear.getDay();
+            
+            // Create array of all days in the year
+            const allDays = [];
+            for (let month = 0; month < 12; month++) {
+                const daysInMonth = getDaysInMonth(currentYear, month);
+                for (let day = 1; day <= daysInMonth; day++) {
+                    allDays.push({ month, day });
+                }
+            }
+
+            // Group days into weeks
+            const weeks = [];
+            let currentWeek = [];
+            
+            // Add empty cells for the first week if year doesn't start on Sunday
+            for (let i = 0; i < firstDayWeekday; i++) {
+                currentWeek.push(null);
+            }
+
+            allDays.forEach(({ month, day }) => {
+                currentWeek.push({ month, day });
+                
+                const dayOfWeek = getDayOfWeek(currentYear, month, day);
+                if (dayOfWeek === 6) { // Saturday - end of week
+                    weeks.push(currentWeek);
+                    currentWeek = [];
+                }
+            });
+
+            // Add remaining days to last week
+            if (currentWeek.length > 0) {
+                // Fill remaining days in the week
+                while (currentWeek.length < 7) {
+                    currentWeek.push(null);
+                }
+                weeks.push(currentWeek);
+            }
+
+            // Calculate month positions
+            let weekIndex = 0;
+            const monthPositions = [];
+            let currentMonth = 0;
+            
+            weeks.forEach((week, index) => {
+                const firstDayInWeek = week.find(d => d !== null);
+                if (firstDayInWeek && firstDayInWeek.month !== currentMonth) {
+                    monthPositions.push({ month: firstDayInWeek.month, weekIndex: index });
+                    currentMonth = firstDayInWeek.month;
+                }
+            });
+
+            // Add month labels
+            monthPositions.forEach((pos, index) => {
+                const monthLabel = document.createElement('div');
+                monthLabel.className = 'heatmap-month-label';
+                monthLabel.textContent = monthNames[pos.month].substring(0, 3);
+                
+                // Calculate position based on week index
+                const leftPos = pos.weekIndex * 15; // 12px day + 3px gap
+                monthLabel.style.position = 'absolute';
+                monthLabel.style.left = leftPos + 'px';
+                monthsDiv.appendChild(monthLabel);
+            });
+            
+            monthsDiv.style.position = 'relative';
+            monthsDiv.style.height = '20px';
+            container.appendChild(monthsDiv);
+
+            // Create content with weekdays and weeks
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'heatmap-content';
+
+            // Weekday labels (Mon, Wed, Fri)
+            const weekdaysDiv = document.createElement('div');
+            weekdaysDiv.className = 'heatmap-weekdays';
+            [1, 3, 5].forEach(dayIndex => {
+                const weekdayDiv = document.createElement('div');
+                weekdayDiv.className = 'heatmap-weekday';
+                weekdayDiv.textContent = weekdayNames[dayIndex];
+                weekdaysDiv.appendChild(weekdayDiv);
+            });
+            contentDiv.appendChild(weekdaysDiv);
+
+            // Weeks container
+            const weeksDiv = document.createElement('div');
+            weeksDiv.className = 'heatmap-weeks';
+
+            weeks.forEach(week => {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'heatmap-week';
+
+                week.forEach(dayData => {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'heatmap-day';
+
+                    if (dayData !== null) {
+                        const { month, day } = dayData;
+                        if (isDayCompleted(completedDays, currentYear, month, day)) {
+                            dayDiv.classList.add('completed');
+                        }
+                    }
+
+                    weekDiv.appendChild(dayDiv);
+                });
+
+                weeksDiv.appendChild(weekDiv);
+            });
+
+            contentDiv.appendChild(weeksDiv);
+            container.appendChild(contentDiv);
+
+            // Legend
+            const legendDiv = document.createElement('div');
+            legendDiv.className = 'heatmap-legend';
+            legendDiv.innerHTML = `
+                <span>Less</span>
+                <div class="heatmap-legend-item"></div>
+                <div class="heatmap-legend-item completed"></div>
+                <span>More</span>
+            `;
+            container.appendChild(legendDiv);
+
+            heatmapDiv.appendChild(container);
+        }
+
+        // Initialize app
+        function init() {
+            renderCalendar();
+            renderHeatmap();
+        }
+
+        // Run when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
